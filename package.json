@@ -1,0 +1,50 @@
+{
+  "name": "nlogn-motion-lab",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "setup": "node scripts/setup-components.mjs",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "lint": "node scripts/check-tokens.mjs && node scripts/check-colors.mjs && eslint",
+    "check:tokens": "node scripts/check-tokens.mjs",
+    "check:colors": "node scripts/check-colors.mjs",
+    "shoot": "node scripts/shoot.mjs",
+    "qa": "node scripts/qa.mjs",
+    "fps": "node scripts/fps.mjs",
+    "check:beams": "node scripts/check-beams.mjs"
+  },
+  "dependencies": {
+    "@paper-design/shaders-react": "^0.0.80",
+    "@radix-ui/react-slot": "^1.3.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "cn": "^0.2.6",
+    "lucide-react": "^1.43.0",
+    "motion": "^12.43.0",
+    "next": "16.3.4",
+    "ogl": "^1.0.11",
+    "radix-ui": "^1.6.7",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "shadcn": "^4.21.0",
+    "tailwind-merge": "^3.6.0",
+    "tw-animate-css": "^1.4.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.4",
+    "playwright": "^1.63.0",
+    "pngjs": "^7.0.0",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  },
+  "description": "A recording lab for building and capturing short animated UI clips at a fixed 1600x900 stage.",
+  "license": "MIT"
+}

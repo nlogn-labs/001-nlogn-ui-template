@@ -1,0 +1,169 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/* Kokonut UI + Cult UI primitives are authored dark-first; the lab pins the
+   dark variant permanently via a `dark` class on <html>. */
+@custom-variant dark (&:is(.dark *));
+
+/* ---------------------------------------------------------------------------
+   NLOGN design tokens.
+   Mirrors lib/brand.ts verbatim — scripts/check-tokens.mjs enforces the match.
+   --------------------------------------------------------------------------- */
+@theme {
+  --color-bg: #0A0A0C;
+  --color-surface: #121216;
+  --color-text: #F5F7FA;
+  --color-muted: #8A94A6;
+  --color-accent: #2563FF;
+  --color-hairline: rgba(255,255,255,0.12);
+
+  --font-display: var(--font-schibsted), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
+
+  /* Fixed type scale. Authored for the 1600x900 stage, sized so it survives
+     the downscale to a 1080px-wide Instagram frame. */
+  --text-display-xl: 132px;
+  --text-display-xl--line-height: 0.92;
+  --text-display-xl--letter-spacing: -0.03em;
+  --text-display-xl--font-weight: 500;
+
+  --text-display-l: 88px;
+  --text-display-l--line-height: 0.98;
+  --text-display-l--letter-spacing: -0.025em;
+  --text-display-l--font-weight: 500;
+
+  --text-heading: 46px;
+  --text-heading--line-height: 1.1;
+  --text-heading--letter-spacing: -0.02em;
+  --text-heading--font-weight: 500;
+
+  --text-body: 22px;
+  --text-body--line-height: 1.5;
+  --text-body--letter-spacing: -0.01em;
+  --text-body--font-weight: 400;
+
+  --text-ui: 16px;
+  --text-ui--line-height: 1.35;
+  --text-ui--letter-spacing: 0em;
+  --text-ui--font-weight: 500;
+
+  --text-caption: 14px;
+  --text-caption--line-height: 1.3;
+  --text-caption--letter-spacing: 0.02em;
+  --text-caption--font-weight: 400;
+}
+
+/* Stage geometry (--stage-w / --stage-h / --safe) is published onto the stage
+   element by DemoShell, from the constants in lib/take/types.ts, so there is
+   only ever one place to change it. */
+
+/* ---------------------------------------------------------------------------
+   shadcn primitive variables remapped onto the brand tokens, so `button`,
+   `card` and `badge` (pulled in as registry dependencies by Cult UI and
+   Kokonut UI) can never resolve to an off-brand colour.
+   --------------------------------------------------------------------------- */
+@layer base {
+  :root {
+    --radius: 2px;
+    --background: var(--color-bg);
+    --foreground: var(--color-text);
+    --card: var(--color-surface);
+    --card-foreground: var(--color-text);
+    --popover: var(--color-surface);
+    --popover-foreground: var(--color-text);
+    --primary: var(--color-accent);
+    --primary-foreground: var(--color-text);
+    --secondary: var(--color-surface);
+    --secondary-foreground: var(--color-text);
+    --muted: var(--color-surface);
+    --muted-foreground: var(--color-muted);
+    --accent: var(--color-surface);
+    --accent-foreground: var(--color-text);
+    --destructive: var(--color-accent);
+    --destructive-foreground: var(--color-text);
+    --border: var(--color-hairline);
+    --input: var(--color-hairline);
+    --ring: var(--color-accent);
+  }
+
+  * {
+    border-color: var(--color-hairline);
+  }
+
+  html,
+  body {
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar {
+    display: none;
+  }
+
+  body {
+    font-family: var(--font-display);
+    font-size: var(--text-body);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    font-synthesis-weight: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Aceternity Spotlight keyframe.
+   Required by the library component (`className="animate-spotlight"`); this is
+   the Tailwind v4 form given in Aceternity's own installation docs. Timing is
+   retuned here so the reveal lands inside the 4s take window.
+   --------------------------------------------------------------------------- */
+@theme inline {
+  --animate-spotlight: spotlight 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0s 1
+    forwards;
+}
+
+/* Slow halo behind a live status dot. */
+@theme inline {
+  --animate-status-halo: status-halo 2.6s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+@keyframes status-halo {
+  0% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(3.4);
+  }
+}
+
+@keyframes spotlight {
+  0% {
+    opacity: 0;
+    transform: translate(-72%, -62%) scale(0.6);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -40%) scale(1);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Kokonut UI HoldButton colour neutralisation.
+   The component's progress fill is an inner element with a hardcoded
+   `bg-gray-200/30 dark:bg-gray-300/30` and no prop to override it, so it is
+   retargeted here rather than by editing the copied library source.
+   The button shell itself is overridden at the call site via className, which
+   `cn`'s tailwind-merge resolves in our favour.
+   --------------------------------------------------------------------------- */
+.nlogn-hold [class*="bg-gray-200"],
+.nlogn-hold [class*="bg-gray-300"] {
+  background-color: color-mix(in srgb, var(--color-accent) 28%, transparent) !important;
+}

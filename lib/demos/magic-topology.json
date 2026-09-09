@@ -1,0 +1,16 @@
+{
+  "note": "Shared by components/demos/MagicDemo.tsx and scripts/check-beams.mjs so the verifier can never drift from what the route actually renders.",
+  "tile": 92,
+  "nodes": {
+    "website":   { "x": 318,  "y": 452, "label": "Website",   "rate": "1.2k / min", "lit": 400 },
+    "crm":       { "x": 716,  "y": 322, "label": "CRM",       "rate": "840 / min",  "lit": 1100 },
+    "email":     { "x": 1142, "y": 244, "label": "Email",     "rate": "310 / min",  "lit": 2100 },
+    "analytics": { "x": 1142, "y": 618, "label": "Analytics", "rate": "1.2k / min", "lit": 1700 }
+  },
+  "beams": [
+    { "from": "website", "to": "crm",       "curvature": 46,   "delay": 0.3, "duration": 12 },
+    { "from": "website", "to": "analytics", "curvature": -118, "delay": 0.6, "duration": 12 },
+    { "from": "crm",     "to": "analytics", "curvature": -22,  "delay": 0.9, "duration": 12 },
+    { "from": "crm",     "to": "email",     "curvature": 40,   "delay": 1.2, "duration": 12 }
+  ]
+}
