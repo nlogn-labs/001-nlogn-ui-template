@@ -28,6 +28,7 @@ Six reference routes ship with it, each driving a different component library.
 - [Capturing frames](#capturing-frames)
 - [Customising it](#customising-it)
 - [Adding a route](#adding-a-route)
+- [Deploying](#deploying)
 - [Reference routes](#reference-routes)
 - [Project layout](#project-layout)
 - [Guardrails](#guardrails)
@@ -371,6 +372,60 @@ npx shadcn@latest add @magicui/<component>
 Then **wrap, don't edit**. Every customisation in this project lives in a
 wrapper, in exposed props, or in a scoped rule in `globals.css` — never in the
 copied source. That is what makes upgrading a component a non-event.
+
+---
+
+## Deploying
+
+It is a stock Next.js app, so **Vercel works with zero configuration** — import
+the repo and deploy. Framework detection, build command and output are all
+handled for you.
+
+One thing makes this project different from a normal Next.js deploy, and it is
+already solved: the components in
+[Licensing](#licensing--read-before-forking) are git-ignored, so a fresh clone
+has no `Threads.tsx`, `BlurText.tsx`, `3d-card.tsx` or `spotlight.tsx`. Without
+a fetch step the build fails with `Module not found`.
+
+`package.json` therefore declares `prebuild`, which npm runs automatically
+before `build`:
+
+```json
+"prebuild": "node scripts/setup-components.mjs",
+"build": "next build"
+```
+
+Vercel only ever runs `npm run build`, so the components are fetched first and
+the deploy succeeds. There is nothing to configure in the dashboard. A clean
+clone builds in about 35 seconds including the fetch. `predev` does the same
+for `npm run dev`, so a fresh clone runs without a separate setup step.
+
+### What this means in practice
+
+- **The build depends on the registries being reachable.** `reactbits.dev` and
+  `ui.aceternity.com` are hit at build time. If one is down, the deploy fails.
+- **Builds are reproducible in version, not in content.** The shadcn CLI is
+  pinned as a dependency and the local binary is preferred over `npx`, but the
+  registries serve latest. An upstream change to those four components arrives
+  on your next deploy. The MIT components are committed and pinned, so they
+  cannot move.
+- **If you want a fully hermetic build**, use a **private** repository and drop
+  the four `.gitignore` entries. The licences restrict *redistribution*, not
+  use — a private repo you deploy for yourself is not distribution. Do not do
+  this in a public fork.
+
+### Notes
+
+- `playwright` is a devDependency and has **no postinstall**, so Vercel installs
+  the JS package only — no browser download, no build-time penalty. The
+  browsers are needed locally for `shoot` / `qa` / `fps`
+  (`npx playwright install chromium`).
+- The demo routes are server-rendered on demand because they read
+  `searchParams`. There is no data fetching, so they are fast and need no
+  caching configuration.
+- Node 20+ (`engines` is declared). Vercel's default is fine.
+- The recording workflow is local. Hosting is useful for sharing the lab, not
+  for capturing — capture with `npm run shoot` against a local server.
 
 ---
 

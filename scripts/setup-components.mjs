@@ -22,6 +22,10 @@
 import { execFileSync } from "node:child_process";
 import { existsSync } from "node:fs";
 
+// shadcn is a direct dependency, so prefer the installed binary: it keeps the
+// version reproducible and avoids npx re-downloading the CLI on every build.
+const LOCAL_CLI = "node_modules/.bin/shadcn";
+
 const REQUIRED = [
   { file: "components/Threads.tsx", id: "@react-bits/Threads-TS-TW" },
   { file: "components/BlurText.tsx", id: "@react-bits/BlurText-TS-TW" },
@@ -39,11 +43,12 @@ console.log(
   `Fetching ${missing.length} component(s) from their own registries...`,
 );
 try {
-  execFileSync(
-    "npx",
-    ["--yes", "shadcn@4.21.0", "add", "-y", "-o", ...missing.map((c) => c.id)],
-    { stdio: "inherit" },
-  );
+  const args = ["add", "-y", "-o", ...missing.map((c) => c.id)];
+  if (existsSync(LOCAL_CLI)) {
+    execFileSync(LOCAL_CLI, args, { stdio: "inherit" });
+  } else {
+    execFileSync("npx", ["--yes", "shadcn@4.21.0", ...args], { stdio: "inherit" });
+  }
 } catch {
   console.error(
     "\nInstall failed. You can run it by hand:\n" +
