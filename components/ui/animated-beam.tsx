@@ -70,22 +70,40 @@ export const AnimatedBeam: React.FC<AnimatedBeamProps> = ({
   useEffect(() => {
     const updatePath = () => {
       if (containerRef.current && fromRef.current && toRef.current) {
-        const containerRect = containerRef.current.getBoundingClientRect()
+        const el = containerRef.current
+        const containerRect = el.getBoundingClientRect()
         const rectA = fromRef.current.getBoundingClientRect()
         const rectB = toRef.current.getBoundingClientRect()
 
-        const svgWidth = containerRect.width
-        const svgHeight = containerRect.height
+        // LOCAL FIX (diverges from upstream Magic UI): make the measurement
+        // transform-aware. getBoundingClientRect reports post-transform
+        // pixels, but the <svg> width/viewBox below are laid out in untransformed
+        // pixels — so under a scaled ancestor (DemoShell scales the stage to
+        // fit the viewport) the geometry was scaled twice and every beam pulled
+        // away from the tiles it was supposed to connect. offsetWidth/Height are
+        // layout pixels, so their ratio to the client rect is the cumulative
+        // ancestor scale; dividing it out puts the path back in the SVG's own
+        // coordinate space. It also makes the path scale-independent, so a
+        // resize that only changes the stage scale needs no recompute.
+        const scaleX = el.offsetWidth ? containerRect.width / el.offsetWidth : 1
+        const scaleY = el.offsetHeight ? containerRect.height / el.offsetHeight : 1
+
+        const svgWidth = containerRect.width / scaleX
+        const svgHeight = containerRect.height / scaleY
         setSvgDimensions({ width: svgWidth, height: svgHeight })
 
         const startX =
-          rectA.left - containerRect.left + rectA.width / 2 + startXOffset
+          (rectA.left + rectA.width / 2 - containerRect.left) / scaleX +
+          startXOffset
         const startY =
-          rectA.top - containerRect.top + rectA.height / 2 + startYOffset
+          (rectA.top + rectA.height / 2 - containerRect.top) / scaleY +
+          startYOffset
         const endX =
-          rectB.left - containerRect.left + rectB.width / 2 + endXOffset
+          (rectB.left + rectB.width / 2 - containerRect.left) / scaleX +
+          endXOffset
         const endY =
-          rectB.top - containerRect.top + rectB.height / 2 + endYOffset
+          (rectB.top + rectB.height / 2 - containerRect.top) / scaleY +
+          endYOffset
 
         const controlY = startY - curvature
         const d = `M ${startX},${startY} Q ${
