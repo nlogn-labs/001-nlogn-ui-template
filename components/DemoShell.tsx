@@ -7,7 +7,8 @@ import { SAFE, STAGE_H, STAGE_W } from "@/lib/take/types";
 export type DemoShellProps = {
   takeMode: boolean;
   loopMode: boolean;
-  /** ?fit=1 — scale the stage down to fit small viewports. Inspection only. */
+  /** Scale the stage to fit the viewport. Default on while browsing, off in
+   *  take mode; `?fit=1` / `?fit=0` override. See lib/take/params.ts. */
   fit: boolean;
   children: React.ReactNode;
 };
@@ -18,7 +19,7 @@ export type DemoShellProps = {
  * Creates a fixed 1600x900 surface, centres it, letterboxes the remaining
  * viewport in `bg`, locks scrolling in both axes, and hosts the take-mode
  * state machine. At scale 1 the stage is never resized, so what is recorded is
- * exactly what was authored.
+ * exactly what was authored — take mode always records at scale 1.
  */
 export function DemoShell(props: DemoShellProps) {
   return (
@@ -57,14 +58,14 @@ function Stage({ fit, children }: { fit: boolean; children: React.ReactNode }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [replay]);
 
-  // Fit handling. Default is no scaling at all: an undersized viewport simply
-  // crops, and a hint appears outside take mode. ?fit=1 opts into a uniform
-  // scale for inspection on smaller panels; DemoCursor divides by the same
-  // factor so visual position and clientX/clientY stay in agreement.
+  // Fit handling. `fit` scales the stage down uniformly so the whole
+  // composition stays visible; DemoCursor reads the same factor off
+  // data-scale, so visual position and clientX/clientY stay in agreement.
+  // With fit off an undersized viewport simply crops — symmetrically, from
+  // the centre out — and a hint appears outside take mode.
   useEffect(() => {
     const measure = () => {
-      const small = window.innerWidth < STAGE_W || window.innerHeight < STAGE_H;
-      setTooSmall(small);
+      setTooSmall(window.innerWidth < STAGE_W || window.innerHeight < STAGE_H);
       setScale(
         fit
           ? Math.min(1, window.innerWidth / STAGE_W, window.innerHeight / STAGE_H)
@@ -77,12 +78,16 @@ function Stage({ fit, children }: { fit: boolean; children: React.ReactNode }) {
   }, [fit]);
 
   return (
-    <div className="fixed inset-0 grid place-items-center overflow-hidden bg-bg">
+    // The stage is centred by transform, not by grid/flex alignment: a grid
+    // item larger than its area resolves centring to `start` (CSS box
+    // alignment's overflow rule), which pinned an oversized stage to the top
+    // left and cropped it entirely off the bottom and right.
+    <div className="fixed inset-0 overflow-hidden bg-bg">
       <div
         ref={stageRef}
         data-stage=""
         data-scale={scale}
-        className="relative overflow-hidden bg-bg"
+        className="absolute left-1/2 top-1/2 overflow-hidden bg-bg"
         style={{
           // Published so CSS and routes can read the same numbers the take
           // system uses; lib/take/types.ts stays the single source of truth.
@@ -91,7 +96,9 @@ function Stage({ fit, children }: { fit: boolean; children: React.ReactNode }) {
           ["--safe" as string]: `${SAFE}px`,
           width: STAGE_W,
           height: STAGE_H,
-          transform: scale === 1 ? undefined : `scale(${scale})`,
+          // translate first, then scale about the (already centred) origin, so
+          // the stage centre sits on the viewport centre at any scale.
+          transform: `translate(-50%, -50%)${scale === 1 ? "" : ` scale(${scale})`}`,
           transformOrigin: "center center",
           cursor: takeMode && !reduced ? "none" : "auto",
         }}
@@ -101,8 +108,8 @@ function Stage({ fit, children }: { fit: boolean; children: React.ReactNode }) {
 
       {tooSmall && !fit && !takeMode ? (
         <p className="pointer-events-none fixed bottom-5 left-1/2 -translate-x-1/2 font-mono text-caption text-muted">
-          viewport below {STAGE_W}&times;{STAGE_H} — the stage is cropped. add ?fit=1
-          to scale it for inspection.
+          viewport below {STAGE_W}&times;{STAGE_H} — ?fit=0 pins the stage at 1:1,
+          so it is cropped. drop the param to scale it to fit.
         </p>
       ) : null}
     </div>

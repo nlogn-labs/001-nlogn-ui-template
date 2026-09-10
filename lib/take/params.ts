@@ -4,12 +4,19 @@ export type DemoSearchParams = Record<string, string | string[] | undefined>;
 const on = (v: string | string[] | undefined) =>
   v === "1" || v === "true" || (Array.isArray(v) && v.includes("1"));
 
+const off = (v: string | string[] | undefined) =>
+  v === "0" || v === "false" || (Array.isArray(v) && v.includes("0"));
+
 export function parseTakeParams(sp: DemoSearchParams) {
   const takeMode = on(sp.take);
   return {
     takeMode,
     loopMode: takeMode && on(sp.loop),
-    fit: on(sp.fit),
+    // Tri-state. Absent: scale to fit while browsing, so the whole 1600x900
+    // composition is visible and centred on any panel — but stay 1:1 in take
+    // mode, where the recording must be the authored pixels. `?fit=1` forces
+    // scaling on, `?fit=0` forces it off (raw 1:1, cropped).
+    fit: off(sp.fit) ? false : on(sp.fit) ? true : !takeMode,
   };
 }
 
