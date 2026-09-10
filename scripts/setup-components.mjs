@@ -42,12 +42,28 @@ if (missing.length === 0) {
 console.log(
   `Fetching ${missing.length} component(s) from their own registries...`,
 );
+
+// shadcn shells out to `npm install` for the components' own dependencies.
+// On a CI builder NODE_ENV is "production", which makes that nested install
+// re-resolve the tree with --omit=dev and prune every devDependency we still
+// need for the build itself (@tailwindcss/postcss, typescript, @types/*).
+// Force dev dependencies to be kept for the child process only.
+const env = {
+  ...process.env,
+  NODE_ENV: "development",
+  npm_config_include: "dev",
+  npm_config_omit: "",
+};
+
 try {
   const args = ["add", "-y", "-o", ...missing.map((c) => c.id)];
   if (existsSync(LOCAL_CLI)) {
-    execFileSync(LOCAL_CLI, args, { stdio: "inherit" });
+    execFileSync(LOCAL_CLI, args, { stdio: "inherit", env });
   } else {
-    execFileSync("npx", ["--yes", "shadcn@4.21.0", ...args], { stdio: "inherit" });
+    execFileSync("npx", ["--yes", "shadcn@4.21.0", ...args], {
+      stdio: "inherit",
+      env,
+    });
   }
 } catch {
   console.error(
@@ -66,4 +82,16 @@ if (stillMissing.length) {
   );
   process.exit(1);
 }
+// If the nested install pruned the build-time dependencies anyway, restore
+// them here rather than failing later inside Turbopack with a bare
+// "Cannot find module '@tailwindcss/postcss'".
+const BUILD_DEPS = ["@tailwindcss/postcss", "tailwindcss", "typescript"];
+if (BUILD_DEPS.some((d) => !existsSync(`node_modules/${d}`))) {
+  console.log("Dev dependencies were pruned by the registry install — restoring...");
+  execFileSync("npm", ["install", "--include=dev", "--no-audit", "--no-fund"], {
+    stdio: "inherit",
+    env,
+  });
+}
+
 console.log("Done. Registry components installed.");
